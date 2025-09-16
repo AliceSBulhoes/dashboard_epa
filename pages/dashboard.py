@@ -34,91 +34,13 @@ def card(kpi_titulo: str, kpi_valor: int, emoji: str = "", color: str = "#5A2781
         """,
         unsafe_allow_html=True)
 
-# Função para agregar dados por período temporal com labels descritivos
-def aggregate_by_period(df, date_column, value_columns, period='D'):
-    """
-    Agrega dados por período temporal
-    
-    Args:
-        df: DataFrame
-        date_column: Nome da coluna de data
-        value_columns: Lista de colunas numéricas para agregar
-        period: Período de agregação ('D'=diário, 'W'=semanal, 'M'=mensal, 'Q'=trimestral, 'Y'=anual)
-    
-    Returns:
-        DataFrame agregado com coluna de período descritivo
-    """
-    df_agg = df.copy()
-    df_agg[date_column] = pd.to_datetime(df_agg[date_column])
-    df_agg = df_agg.set_index(date_column)
-    
-    # Agrupar por período e somar as colunas numéricas
-    df_agg = df_agg[value_columns].resample(period).sum().reset_index()
-    
-    # Adicionar coluna com label descritivo do período
-    if period == 'D':
-        df_agg['Periodo'] = df_agg[date_column].dt.strftime('%d/%m/%Y')
-        df_agg['Periodo_Ordenacao'] = df_agg[date_column]
-    elif period == 'W':
-        df_agg['Periodo'] = 'Sem ' + df_agg[date_column].dt.isocalendar().week.astype(str) + '/' + df_agg[date_column].dt.year.astype(str)
-        df_agg['Periodo_Ordenacao'] = df_agg[date_column]
-    elif period == 'M':
-        df_agg['Periodo'] = df_agg[date_column].dt.strftime('%b/%Y')
-        df_agg['Periodo_Ordenacao'] = df_agg[date_column]
-    elif period == 'Q':
-        df_agg['Periodo'] = 'T' + df_agg[date_column].dt.quarter.astype(str) + '/' + df_agg[date_column].dt.year.astype(str)
-        df_agg['Periodo_Ordenacao'] = df_agg[date_column]
-    elif period == 'Y':
-        df_agg['Periodo'] = df_agg[date_column].dt.year.astype(str)
-        df_agg['Periodo_Ordenacao'] = df_agg[date_column]
-    
-    return df_agg
-
-# Função para agregar dados de FL (usando média)
-def aggregate_fl_by_period(df, period='D'):
-    """
-    Agrega dados de FL por período temporal usando média
-    
-    Args:
-        df: DataFrame de FL
-        period: Período de agregação
-    
-    Returns:
-        DataFrame agregado com coluna de período descritivo
-    """
-    df_agg = df.copy()
-    df_agg['Data'] = pd.to_datetime(df_agg['Data'])
-    df_agg = df_agg.set_index('Data')
-    
-    # Agrupar por poço e período, calculando a média
-    df_agg = df_agg.groupby(['Poço']).resample(period).mean().reset_index()
-    
-    # Adicionar coluna com label descritivo do período
-    if period == 'D':
-        df_agg['Periodo'] = df_agg['Data'].dt.strftime('%d/%m/%Y')
-        df_agg['Periodo_Ordenacao'] = df_agg['Data']
-    elif period == 'W':
-        df_agg['Periodo'] = 'Sem ' + df_agg['Data'].dt.isocalendar().week.astype(str) + '/' + df_agg['Data'].dt.year.astype(str)
-        df_agg['Periodo_Ordenacao'] = df_agg['Data']
-    elif period == 'M':
-        df_agg['Periodo'] = df_agg['Data'].dt.strftime('%b/%Y')
-        df_agg['Periodo_Ordenacao'] = df_agg['Data']
-    elif period == 'Q':
-        df_agg['Periodo'] = 'T' + df_agg['Data'].dt.quarter.astype(str) + '/' + df_agg['Data'].dt.year.astype(str)
-        df_agg['Periodo_Ordenacao'] = df_agg['Data']
-    elif period == 'Y':
-        df_agg['Periodo'] = df_agg['Data'].dt.year.astype(str)
-        df_agg['Periodo_Ordenacao'] = df_agg['Data']
-    
-    return df_agg
-
 # Interface do Dashboard
 st.write("# Dashboard")
 
 # --------- Upload do Arquivo ---------
 st.sidebar.write("## Upload do Arquivo")
 # Download de um arquivo de exemplo
-upload_file = st.sidebar.file_uploader("Upload do Arquivo", type=["csv", "xlsx"], accept_multiple_files=True, help="Faça upload de arquivos CSV ou Excel.")
+upload_file = st.sidebar.file_uploader("Upload do Arquivo", type=["csv", "xlsx"], accept_multiple_files=True, key="file_uploader", help="Faça upload de arquivos CSV ou Excel.")
 
 # st.write("*OBS: O arquivo pegará apenas a primeira página, se tiver múltiplas páginas.*")
 
@@ -135,6 +57,15 @@ if upload_file is not None:
         # DF FL
         df_fl = pd.read_excel(uploaded_file, sheet_name="FL", engine='openpyxl')
         df_fl = tratando_df(df_fl)
+
+        # DF Hidrogeológicos
+        df_hidrometros = pd.read_excel(uploaded_file, sheet_name="Hidrômetros", engine='openpyxl')
+        df_hidrometros = tratando_df(df_hidrometros)
+
+        # DF Coleta
+        # df_coleta = pd.read_excel(uploaded_file, sheet_name="Coleta", engine='openpyxl')
+        # df_coleta = tratando_df(df_coleta)
+        
 
         # Visualizar DataFrame
         # st.write(df_fl)
@@ -172,33 +103,22 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
         "Selecione o Tipo de Gráfico",
         options=["FL", "Volume Produto", "Volume Bombeado"],
     )
-    
     # ---------------------- Filtros Sidebar -----------------------
     st.sidebar.header("Filtros")
-    
-    # ----- Filtro de Agregação Temporal -----
-    periodo_agregacao = st.sidebar.selectbox(
-        "Agregação Temporal",
-        options=["Diário", "Semanal", "Mensal", "Trimestral", "Anual"],
-        index=0,
-        help="Selecione o período para agregar os dados"
-    )
-    
-    # Mapear seleção para código de período do pandas
-    periodo_map = {
-        "Diário": "D",
-        "Semanal": "W",
-        "Mensal": "M",
-        "Trimestral": "Q",
-        "Anual": "Y"
-    }
-    periodo_selecionado = periodo_map[periodo_agregacao]
-    
+
+    # -------- Categorias --------
+    st.sidebar.write("### Categorias")
+    categorias = ['Operacional', 'Hidrogeológicos', 'Hidrogeoquímicos', 'Parâmetros in Situ']
+    categoria_selecionada = st.sidebar.multiselect("Selecione a Categoria", options=categorias, default=categorias[0])
+
     # ----- Data Filter -----
+    st.sidebar.write("### Faixa de Data")
     data_min = pd.to_datetime(df_volume['Data'].min())
     data_max = pd.to_datetime(df_volume['Data'].max())
     data_inicio = st.sidebar.date_input("Data Inicial", value=data_min, min_value=data_min, max_value=data_max)
     data_fim = st.sidebar.date_input("Data Final", value=data_max, min_value=data_min, max_value=data_max)
+
+
 
     # Filtrar DataFrame pelo intervalo de datas selecionado
     df_volume = filter_by_date(df_volume, 'Data', data_inicio, data_fim)
@@ -242,47 +162,35 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
 
         # ----------- Filtrar DataFrame pelo Tipo Selecionado -----------
         if tipo_selecionado:
-            # Agregar dados por período para FL
-            if periodo_agregacao != "Diário":
-                df_fl_agg = aggregate_fl_by_period(df_fl, periodo_selecionado)
-                x_axis_column = 'Periodo'
-            else:
-                df_fl_agg = df_fl
-                x_axis_column = 'Data'
-            
-            # Ordenar por período para garantir a ordem correta
-            if periodo_agregacao != "Diário":
-                df_fl_agg = df_fl_agg.sort_values('Periodo_Ordenacao')
-            
             # Lista para armazenar as figuras criadas
             figuras = []
 
             if 'NA (m)' in tipo_selecionado:
-                fig_na = px.bar(df_fl_agg, 
-                                x=x_axis_column, 
+                fig_na = px.bar(df_fl, 
+                                x='Data', 
                                 y='NA (m)', 
                                 color='Poço', 
-                                title=f'Nível de Água (NA) - {periodo_agregacao}', 
+                                title='Nível de Água (NA) ao Longo do Tempo', 
                                 color_discrete_sequence=px.colors.qualitative.Dark24,
                                 barmode='group')
                 figuras.append(fig_na)
 
             if 'NO (m)' in tipo_selecionado:
-                fig_no = px.bar(df_fl_agg, 
-                                x=x_axis_column, 
+                fig_no = px.bar(df_fl, 
+                                x='Data', 
                                 y='NO (m)', 
                                 color='Poço', 
-                                title=f'Nível de Óleo (NO) - {periodo_agregacao}', 
+                                title='Nível de Óleo (NO) ao Longo do Tempo', 
                                 color_discrete_sequence=px.colors.qualitative.Dark24,
                                 barmode='group')
                 figuras.append(fig_no)
 
             if 'Esp. (m)' in tipo_selecionado:
-                fig_esp = px.bar(df_fl_agg, 
-                                x=x_axis_column, 
+                fig_esp = px.bar(df_fl, 
+                                x='Data', 
                                 y='Esp. (m)', 
                                 color='Poço', 
-                                title=f'Espessura de Óleo - {periodo_agregacao}', 
+                                title='Espessura de Óleo ao Longo do Tempo', 
                                 color_discrete_sequence=px.colors.qualitative.Dark24,
                                 barmode='group')
                 figuras.append(fig_esp)
@@ -296,32 +204,31 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
                     bargroupgap=0.1,
                     showlegend=True
                 )
-                if periodo_agregacao != "Diário":
-                    fig.update_xaxes(title_text='Período')
+
 
             if len(tipo_selecionado) == 3:
                 col1, col2= st.columns(2)
-                col1.plotly_chart(fig_na, use_container_width=True)
-                col2.plotly_chart(fig_no, use_container_width=True)
-                st.plotly_chart(fig_esp, use_container_width=True)
+                col1.plotly_chart(fig_na, use_container_width=True, key="fl_na_col1")
+                col2.plotly_chart(fig_no, use_container_width=True, key="fl_no_col2")
+                st.plotly_chart(fig_esp, use_container_width=True, key="fl_esp_col3")
             elif len(tipo_selecionado) == 2:
                 col1, col2 = st.columns(2)
                 if 'NA (m)' in tipo_selecionado and 'NO (m)' in tipo_selecionado:
-                    col1.plotly_chart(fig_na, use_container_width=True)
-                    col2.plotly_chart(fig_no, use_container_width=True)
+                    col1.plotly_chart(fig_na, use_container_width=True, key="fl_na_col1_2")
+                    col2.plotly_chart(fig_no, use_container_width=True, key="fl_no_col2_2")
                 elif 'NA (m)' in tipo_selecionado and 'Esp. (m)' in tipo_selecionado:
-                    col1.plotly_chart(fig_na, use_container_width=True)
-                    col2.plotly_chart(fig_esp, use_container_width=True)
+                    col1.plotly_chart(fig_na, use_container_width=True, key="fl_na_col1_esp")
+                    col2.plotly_chart(fig_esp, use_container_width=True, key="fl_esp_col2_esp")
                 else:
-                    col1.plotly_chart(fig_no, use_container_width=True)
-                    col2.plotly_chart(fig_esp, use_container_width=True)
+                    col1.plotly_chart(fig_no, use_container_width=True, key="fl_no_col1_else")
+                    col2.plotly_chart(fig_esp, use_container_width=True, key="fl_esp_col2_else")
             else:
                 if 'NA (m)' in tipo_selecionado:
-                    st.plotly_chart(fig_na, use_container_width=True)
+                    st.plotly_chart(fig_na, use_container_width=True, key="fl_na_single")
                 elif 'NO (m)' in tipo_selecionado:
-                    st.plotly_chart(fig_no, use_container_width=True)
+                    st.plotly_chart(fig_no, use_container_width=True, key="fl_no_single")
                 else:
-                    st.plotly_chart(fig_esp, use_container_width=True)
+                    st.plotly_chart(fig_esp, use_container_width=True, key="fl_esp_single")
 
 
     elif tipo_grafico == "Volume Produto":
@@ -347,77 +254,48 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
         colunas_escolher = st.multiselect("Selecione as colunas para o gráfico", options=['Volume Removido SAO (L)', 'Volume Removido Bailer (L)', 'Volume Acumulado (L)'])
 
         if colunas_escolher:
-            # Agregar dados por período
-            if periodo_agregacao != "Diário":
-                df_volume_produto_agg = aggregate_by_period(
-                    df_volume_produto, 
-                    'Data', 
-                    ['Volume Removido SAO (L)', 'Volume Removido Bailer (L)'],
-                    periodo_selecionado
-                )
-                # Para volume acumulado, precisamos recalcular após a agregação
-                df_volume_produto_agg = add_accumulated_column(
-                    df_volume_produto_agg, 
-                    ['Volume Removido SAO (L)', 'Volume Removido Bailer (L)'], 
-                    'Volume Acumulado (L)'
-                )
-                x_axis_column = 'Periodo'
-            else:
-                df_volume_produto_agg = df_volume_produto
-                x_axis_column = 'Data'
-            
-            # Ordenar por período para garantir a ordem correta
-            if periodo_agregacao != "Diário":
-                df_volume_produto_agg = df_volume_produto_agg.sort_values('Periodo_Ordenacao')
-            
             if 'Volume Acumulado (L)' in colunas_escolher:
-                fig_vol_ac = px.line(df_volume_produto_agg, x=x_axis_column, y='Volume Acumulado (L)' ,title=f'Volume Acumulado - {periodo_agregacao}', color_discrete_sequence=['#c44d15'])
+                fig_vol_ac = px.line(df_volume_produto, x='Data', y='Volume Acumulado (L)' ,title='Volume Acumulado ao Longo do Tempo', color_discrete_sequence=['#c44d15'])
             if 'Volume Removido SAO (L)' in colunas_escolher:
                 fig_vol_sao = px.bar(
-                    df_volume_produto_agg,
-                    x=x_axis_column,
+                    df_volume_produto,
+                    x='Data',
                     y='Volume Removido SAO (L)',
-                    title=f'Volume Removido SAO - {periodo_agregacao}',
+                    title='Volume Removido SAO ao Longo do Tempo',
                     color_discrete_sequence=['#156082']
                 )
             if 'Volume Removido Bailer (L)' in colunas_escolher:
                 fig_vol_bailer = px.bar(
-                    df_volume_produto_agg,
-                    x=x_axis_column,
+                    df_volume_produto,
+                    x='Data',
                     y='Volume Removido Bailer (L)',
-                    title=f'Volume Removido Bailer - {periodo_agregacao}',
+                    title='Volume Removido Bailer ao Longo do Tempo',
                     color_discrete_sequence=['#e17b7b']
                 )
-            
-            # Atualizar labels do eixo X
-            for fig in [fig_vol_ac, fig_vol_sao, fig_vol_bailer]:
-                if periodo_agregacao != "Diário":
-                    fig.update_xaxes(title_text='Período')
-            
             if len(colunas_escolher) == 3:
                 col1, col2, col3 = st.columns(3)
-                col1.plotly_chart(fig_vol_ac, use_container_width=True)
-                col2.plotly_chart(fig_vol_sao, use_container_width=True)
-                col3.plotly_chart(fig_vol_bailer, use_container_width=True)
+                col1.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado")
+                col2.plotly_chart(fig_vol_sao, use_container_width=True, key="vol_sao")
+                col3.plotly_chart(fig_vol_bailer, use_container_width=True, key="vol_bailer")
             elif len(colunas_escolher) == 2:
                 col1, col2 = st.columns(2)
                 if 'Volume Acumulado (L)' in colunas_escolher and 'Volume Removido SAO (L)' in colunas_escolher:
-                    col1.plotly_chart(fig_vol_ac, use_container_width=True)
-                    col2.plotly_chart(fig_vol_sao, use_container_width=True)
+                    col1.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado")
+                    col2.plotly_chart(fig_vol_sao, use_container_width=True, key="vol_sao")
                 elif 'Volume Acumulado (L)' in colunas_escolher and 'Volume Removido Bailer (L)' in colunas_escolher:
-                    col1.plotly_chart(fig_vol_ac, use_container_width=True)
-                    col2.plotly_chart(fig_vol_bailer, use_container_width=True)
+                    col1.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado")
+                    col2.plotly_chart(fig_vol_bailer, use_container_width=True, key="vol_bailer")
                 else:
-                    col1.plotly_chart(fig_vol_sao, use_container_width=True)
-                    col2.plotly_chart(fig_vol_bailer, use_container_width=True)
+                    col1.plotly_chart(fig_vol_sao, use_container_width=True, key="vol_sao")
+                    col2.plotly_chart(fig_vol_bailer, use_container_width=True, key="vol_bailer")
             else:
                 if 'Volume Acumulado (L)' in colunas_escolher:
-                    st.plotly_chart(fig_vol_ac, use_container_width=True)
+                    st.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado")
                 elif 'Volume Removido SAO (L)' in colunas_escolher:
-                    st.plotly_chart(fig_vol_sao, use_container_width=True)
+                    st.plotly_chart(fig_vol_sao, use_container_width=True, key="vol_sao")
                 else:
-                    st.plotly_chart(fig_vol_bailer, use_container_width=True)
-
+                    st.plotly_chart(fig_vol_bailer, use_container_width=True, key="vol_bailer")
+                
 
 
     elif tipo_grafico == "Volume Bombeado":
@@ -441,56 +319,27 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
 
         # ---------------------- Gráficos -----------------------
         colunas_escolher = st.multiselect("Selecione as colunas para o gráfico", options=['Volume Acumulado (L)', 'Volume Bombeado (L)'])
-        
         if colunas_escolher:
-            # Agregar dados por período
-            if periodo_agregacao != "Diário":
-                df_volume_agg = aggregate_by_period(
-                    df_volume, 
-                    'Data', 
-                    ['Volume Bombeado (L)'],
-                    periodo_selecionado
-                )
-                # Recalcular volume acumulado após agregação
-                df_volume_agg = add_accumulated_column(
-                    df_volume_agg, 
-                    ['Volume Bombeado (L)'], 
-                    'Volume Acumulado (L)'
-                )
-                x_axis_column = 'Periodo'
-            else:
-                df_volume_agg = df_volume
-                x_axis_column = 'Data'
-            
-            # Ordenar por período para garantir a ordem correta
-            if periodo_agregacao != "Diário":
-                df_volume_agg = df_volume_agg.sort_values('Periodo_Ordenacao')
-            
             if 'Volume Acumulado (L)' in colunas_escolher:
-                fig_vol_ac = px.line(df_volume_agg, x=x_axis_column, y='Volume Acumulado (L)' ,title=f'Volume Acumulado - {periodo_agregacao}', color_discrete_sequence=['#c44d15'])
+                fig_vol_ac = px.line(df_volume, x='Data', y='Volume Acumulado (L)' ,title='Volume Acumulado ao Longo do Tempo', color_discrete_sequence=['#c44d15'])
             if 'Volume Bombeado (L)' in colunas_escolher:
                 fig_vol_bom = px.bar(
-                    df_volume_agg,
-                    x=x_axis_column,
+                    df_volume,
+                    x='Data',
                     y='Volume Bombeado (L)',
-                    title=f'Volume Bombeado - {periodo_agregacao}',
+                    title='Volume Bombeado ao Longo do Tempo',
                     color_discrete_sequence=['#156082']
                 )
-            
-            # Atualizar labels do eixo X
-            for fig in [fig_vol_ac, fig_vol_bom]:
-                if periodo_agregacao != "Diário":
-                    fig.update_xaxes(title_text='Período')
-            
             if len(colunas_escolher) == 2:
                 col1, col2 = st.columns(2)
-                col1.plotly_chart(fig_vol_ac, use_container_width=True,)
-                col2.plotly_chart(fig_vol_bom, use_container_width=True)
+                col1.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado_bomb")
+                col2.plotly_chart(fig_vol_bom, use_container_width=True, key="vol_bombeado")
             else:
                 if 'Volume Acumulado (L)' in colunas_escolher:
-                    st.plotly_chart(fig_vol_ac, use_container_width=True)
+                    st.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado_bomb")
                 else:
-                    st.plotly_chart(fig_vol_bom, use_container_width=True)
+                    st.plotly_chart(fig_vol_bom, use_container_width=True, key="vol_bombeado")
 
         else:
             st.warning("Por favor, selecione pelo menos uma coluna para o gráfico.")
+   
