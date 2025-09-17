@@ -8,6 +8,10 @@ import numpy as np
 import plotly.express as px
 from utils import tratando_df, fillna_columns, add_accumulated_column, filter_by_date
 
+# Helpers para limpar filtros via callbacks
+def _clear_state_key(key: str):
+    st.session_state[key] = []
+
 # Inicializa os DataFrames como None para evitar NameError
 df_fl = None
 df_volume_produto = None
@@ -109,7 +113,13 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
     # -------- Categorias --------
     st.sidebar.write("### Categorias")
     categorias = ['Operacional', 'Hidrogeológicos', 'Hidrogeoquímicos', 'Parâmetros in Situ']
-    categoria_selecionada = st.sidebar.multiselect("Selecione a Categoria", options=categorias, default=categorias[0])
+    
+    # Initialize session state for categories
+    if "filtro_categorias" not in st.session_state:
+        st.session_state["filtro_categorias"] = [categorias[0]]
+    
+    categoria_selecionada = st.sidebar.multiselect("Selecione a Categoria", options=categorias, default=st.session_state["filtro_categorias"], key="filtro_categorias")
+    st.sidebar.button("Limpar", key="btn_limpar_categorias", on_click=_clear_state_key, kwargs={"key": "filtro_categorias"},width='stretch')
 
     # ----- Data Filter -----
     st.sidebar.write("### Faixa de Data")
@@ -137,7 +147,14 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
         filtroCol1, filtroCol2 = st.columns(2)
 
         pocos = df_fl['Poço'].unique().tolist()
-        poço_selecionado = filtroCol1.multiselect("Selecione os Poços", options=pocos, default=pocos[0])
+        
+        # Initialize session state for pocos
+        if "filtro_pocos" not in st.session_state:
+            st.session_state["filtro_pocos"] = [pocos[0]]
+        
+        pocos_col1, pocos_col2 = filtroCol1.columns([3, 1],vertical_alignment="center")
+        poço_selecionado = pocos_col1.multiselect("Selecione os Poços", options=pocos, default=st.session_state["filtro_pocos"], key="filtro_pocos")
+        pocos_col2.button("Limpar", key="btn_limpar_pocos", on_click=_clear_state_key, kwargs={"key": "filtro_pocos"})
 
 
         # ----------- Filtrar DataFrame pelo Poço Selecionado -----------
@@ -150,7 +167,14 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
 
         # ------- Filtros de Situação do Poço ------
         tipo = ['NA (m)','NO (m)', 'Esp. (m)']
-        tipo_selecionado = filtroCol2.multiselect("Selecione o Tipo", options=tipo, default=tipo[0])
+        
+        # Initialize session state for tipos
+        if "filtro_tipos" not in st.session_state:
+            st.session_state["filtro_tipos"] = [tipo[0]]
+        
+        tipos_col1, tipos_col2 = filtroCol2.columns([3, 1],vertical_alignment="center")
+        tipo_selecionado = tipos_col1.multiselect("Selecione o Tipo", options=tipo, default=st.session_state["filtro_tipos"], key="filtro_tipos")
+        tipos_col2.button("Limpar", key="btn_limpar_tipos", on_click=_clear_state_key, kwargs={"key": "filtro_tipos"})
 
 
         # ----------- Cards de KPIs -----------
@@ -251,7 +275,13 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
         with k4: card("Dias Sem Registro", dias_sem_registro, "🛑", color="#D7263D")
 
         # ---------------------- Gráficos -----------------------
-        colunas_escolher = st.multiselect("Selecione as colunas para o gráfico", options=['Volume Removido SAO (L)', 'Volume Removido Bailer (L)', 'Volume Acumulado (L)'])
+        # Initialize session state for produto columns
+        if "filtro_colunas_produto" not in st.session_state:
+            st.session_state["filtro_colunas_produto"] = []
+        
+        col1, col2 = st.columns([3, 1],vertical_alignment="center")
+        colunas_escolher = col1.multiselect("Selecione as colunas para o gráfico", options=['Volume Removido SAO (L)', 'Volume Removido Bailer (L)', 'Volume Acumulado (L)'], default=st.session_state["filtro_colunas_produto"], key="filtro_colunas_produto")
+        col2.button("Limpar", key="btn_limpar_colunas_prod", on_click=_clear_state_key, kwargs={"key": "filtro_colunas_produto"})
 
         if colunas_escolher:
             if 'Volume Acumulado (L)' in colunas_escolher:
@@ -318,7 +348,13 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
         with k4: card("Dias Sem Registro", dias_sem_registro, "🛑", color="#D7263D")
 
         # ---------------------- Gráficos -----------------------
-        colunas_escolher = st.multiselect("Selecione as colunas para o gráfico", options=['Volume Acumulado (L)', 'Volume Bombeado (L)'])
+        # Initialize session state for bombeado columns
+        if "filtro_colunas_bombeado" not in st.session_state:
+            st.session_state["filtro_colunas_bombeado"] = []
+        
+        col1, col2 = st.columns([3, 1],vertical_alignment="center")
+        colunas_escolher = col1.multiselect("Selecione as colunas para o gráfico", options=['Volume Acumulado (L)', 'Volume Bombeado (L)'], default=st.session_state["filtro_colunas_bombeado"], key="filtro_colunas_bombeado")
+        col2.button("Limpar", key="btn_limpar_colunas_bomb", on_click=_clear_state_key, kwargs={"key": "filtro_colunas_bombeado"})
         if colunas_escolher:
             if 'Volume Acumulado (L)' in colunas_escolher:
                 fig_vol_ac = px.line(df_volume, x='Data', y='Volume Acumulado (L)' ,title='Volume Acumulado ao Longo do Tempo', color_discrete_sequence=['#c44d15'])
