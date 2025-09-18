@@ -103,6 +103,10 @@ if upload_file is not None:
 
 
 if df_fl is not None and df_volume_produto is not None and df_volume is not None:
+    # ARMAZENAR OS VALORES ORIGINAIS ANTES DE QUALQUER FILTRAGEM
+    data_min_original = pd.to_datetime(df_volume['Data'].min())
+    data_max_original = pd.to_datetime(df_volume['Data'].max())
+    
     # Processar os dados conforme necessário
     tipo_grafico = st.selectbox(
         "Selecione o Tipo de Gráfico",
@@ -136,12 +140,21 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
 
     # ----- Data Filter -----
     st.sidebar.write("### Faixa de Data")
-    data_min = pd.to_datetime(df_volume['Data'].min())
-    data_max = pd.to_datetime(df_volume['Data'].max())
-    data_inicio = st.sidebar.date_input("Data Inicial", value=data_min, min_value=data_min, max_value=data_max)
-    data_fim = st.sidebar.date_input("Data Final", value=data_max, min_value=data_min, max_value=data_max)
-
-
+    # USAR OS VALORES ORIGINAIS PARA OS DATE_INPUTS
+    data_inicio = st.sidebar.date_input(
+        "Data Inicial", 
+        value=data_min_original, 
+        min_value=data_min_original, 
+        max_value=data_max_original, 
+        format="DD/MM/YYYY"
+    )
+    data_fim = st.sidebar.date_input(
+        "Data Final", 
+        value=data_max_original, 
+        min_value=data_min_original, 
+        max_value=data_max_original, 
+        format="DD/MM/YYYY"
+    )
 
     # Filtrar DataFrame pelo intervalo de datas selecionado
     df_volume = filter_by_date(df_volume, 'Data', data_inicio, data_fim)
