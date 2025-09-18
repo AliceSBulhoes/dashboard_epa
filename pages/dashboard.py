@@ -7,6 +7,7 @@ import seaborn as sns
 import numpy as np
 import plotly.express as px
 from utils import tratando_df, fillna_columns, add_accumulated_column, filter_by_date
+from components.btn import btn_download_multiple
 
 # Helpers para limpar filtros via callbacks
 def _clear_state_key(key: str):
@@ -106,6 +107,7 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
     tipo_grafico = st.selectbox(
         "Selecione o Tipo de Gráfico",
         options=["FL", "Volume Produto", "Volume Bombeado"],
+        index=0
     )
     # ---------------------- Filtros Sidebar -----------------------
     st.sidebar.header("Filtros")
@@ -118,7 +120,18 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
     if "filtro_categorias" not in st.session_state:
         st.session_state["filtro_categorias"] = [categorias[0]]
     
-    categoria_selecionada = st.sidebar.multiselect("Selecione a Categoria", options=categorias, default=st.session_state["filtro_categorias"], key="filtro_categorias")
+    default_categorias = [cat for cat in st.session_state["filtro_categorias"] if cat in categorias] if "filtro_categorias" in st.session_state else [categorias[0]]
+    if not default_categorias:
+        default_categorias = [categorias[0]]
+    categoria_selecionada = st.sidebar.multiselect(
+        "Selecione a Categoria",
+        options=categorias,
+        default=default_categorias,
+        key="filtro_categorias"
+    )
+    if not categoria_selecionada:
+        st.sidebar.warning("Por favor, selecione pelo menos uma categoria.")
+        st.stop()
     st.sidebar.button("Limpar", key="btn_limpar_categorias", on_click=_clear_state_key, kwargs={"key": "filtro_categorias"},width='stretch')
 
     # ----- Data Filter -----
@@ -139,120 +152,108 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
     if tipo_grafico == "FL":
         st.write("## Gráficos de Fase Livre")
 
-        #  ----------- Preenchendo NaN ---------
+        # Preencher NaN
         df_fl = fillna_columns(df_fl, ['NA (m)', 'NO (m)', 'Esp. (m)'], 0)
 
-
-        # ----------- Filtros de Poços -----------
+        # Filtros de Poços
         filtroCol1, filtroCol2 = st.columns(2)
-
         pocos = df_fl['Poço'].unique().tolist()
-        
-        # Initialize session state for pocos
+
         if "filtro_pocos" not in st.session_state:
             st.session_state["filtro_pocos"] = [pocos[0]]
-        
-        pocos_col1, pocos_col2 = filtroCol1.columns([3, 1],vertical_alignment="center")
-        poço_selecionado = pocos_col1.multiselect("Selecione os Poços", options=pocos, default=st.session_state["filtro_pocos"], key="filtro_pocos")
-        pocos_col2.button("Limpar", key="btn_limpar_pocos", on_click=_clear_state_key, kwargs={"key": "filtro_pocos"})
 
+        pocos_col1, pocos_col2 = filtroCol1.columns([3,1], vertical_alignment="center")
+        poço_selecionado = pocos_col1.multiselect(
+            "Selecione os Poços",
+            options=pocos,
+            default=st.session_state["filtro_pocos"] if st.session_state["filtro_pocos"] else [pocos[0]],
+            key="filtro_pocos"
+        )
+        pocos_col2.button("Limpar", key="btn_limpar_pocos", on_click=_clear_state_key, kwargs={"key":"filtro_pocos"})
 
-        # ----------- Filtrar DataFrame pelo Poço Selecionado -----------
         if poço_selecionado:
             df_fl = df_fl[df_fl['Poço'].isin(poço_selecionado)]
         else:
             st.warning("Por favor, selecione pelo menos um poço.")
             st.stop()
 
-
-        # ------- Filtros de Situação do Poço ------
-        tipo = ['NA (m)','NO (m)', 'Esp. (m)']
-        
-        # Initialize session state for tipos
+        # Filtros de Tipo
+        tipo = ['NA (m)','NO (m)','Esp. (m)']
         if "filtro_tipos" not in st.session_state:
             st.session_state["filtro_tipos"] = [tipo[0]]
-        
-        tipos_col1, tipos_col2 = filtroCol2.columns([3, 1],vertical_alignment="center")
-        tipo_selecionado = tipos_col1.multiselect("Selecione o Tipo", options=tipo, default=st.session_state["filtro_tipos"], key="filtro_tipos")
-        tipos_col2.button("Limpar", key="btn_limpar_tipos", on_click=_clear_state_key, kwargs={"key": "filtro_tipos"})
 
+        tipos_col1, tipos_col2 = filtroCol2.columns([3,1], vertical_alignment="center")
+        tipo_selecionado = tipos_col1.multiselect(
+            "Selecione o Tipo",
+            options=tipo,
+            default=st.session_state["filtro_tipos"] if st.session_state["filtro_tipos"] else [tipo[0]],
+            key="filtro_tipos"
+        )
+        if not tipo_selecionado:
+            st.warning("Por favor, selecione pelo menos um tipo.")
+            st.stop()
+        tipos_col2.button("Limpar", key="btn_limpar_tipos", on_click=_clear_state_key, kwargs={"key":"filtro_tipos"})
 
-        # ----------- Cards de KPIs -----------
-        total_pocos = len(pocos)
-        k1, k2 = st.columns(2)
-        with k1: card("Total de Poços", total_pocos, "🛢️", color="#5A2781")
-        with k2: card("Poços Selecionados", len(poço_selecionado), "✅", color="#2EE43D")
+        # Criar figuras
+        figuras = []
 
+        if 'NA (m)' in tipo_selecionado:
+            fig_na = px.bar(
+                df_fl,
+                x='Data',
+                y='NA (m)',
+                color='Poço',
+                title='Nível de Água (NA)',
+                color_discrete_sequence=px.colors.qualitative.Dark24,
+                barmode='group'
+            )
+            fig_na.update_layout(dragmode='zoom', xaxis_tickangle=-45, legend_title_text='Poços')
+            figuras.append(fig_na)
 
-        # ----------- Filtrar DataFrame pelo Tipo Selecionado -----------
-        if tipo_selecionado:
-            # Lista para armazenar as figuras criadas
-            figuras = []
+        if 'NO (m)' in tipo_selecionado:
+            fig_no = px.bar(
+                df_fl,
+                x='Data',
+                y='NO (m)',
+                color='Poço',
+                title='Nível de Óleo (NO)',
+                color_discrete_sequence=px.colors.qualitative.Dark24,
+                barmode='group'
+            )
+            fig_no.update_layout(dragmode='zoom', xaxis_tickangle=-45, legend_title_text='Poços')
+            figuras.append(fig_no)
 
-            if 'NA (m)' in tipo_selecionado:
-                fig_na = px.bar(df_fl, 
-                                x='Data', 
-                                y='NA (m)', 
-                                color='Poço', 
-                                title='Nível de Água (NA) ao Longo do Tempo', 
-                                color_discrete_sequence=px.colors.qualitative.Dark24,
-                                barmode='group')
-                figuras.append(fig_na)
+        if 'Esp. (m)' in tipo_selecionado:
+            fig_esp = px.bar(
+                df_fl,
+                x='Data',
+                y='Esp. (m)',
+                color='Poço',
+                title='Espessura de Óleo',
+                color_discrete_sequence=px.colors.qualitative.Dark24,
+                barmode='group'
+            )
+            fig_esp.update_layout(dragmode='zoom', xaxis_tickangle=-45, legend_title_text='Poços')
+            figuras.append(fig_esp)
 
-            if 'NO (m)' in tipo_selecionado:
-                fig_no = px.bar(df_fl, 
-                                x='Data', 
-                                y='NO (m)', 
-                                color='Poço', 
-                                title='Nível de Óleo (NO) ao Longo do Tempo', 
-                                color_discrete_sequence=px.colors.qualitative.Dark24,
-                                barmode='group')
-                figuras.append(fig_no)
+        # Exibir gráficos
+        n_figs = len(figuras)
+        if n_figs == 3:
+            col1, col2 = st.columns(2)
+            col1.plotly_chart(fig_na, use_container_width=True, key="fl_na_col1")
+            col2.plotly_chart(fig_no, use_container_width=True, key="fl_no_col2")
+            st.plotly_chart(fig_esp, use_container_width=True, key="fl_esp_col3")
+        elif n_figs == 2:
+            col1, col2 = st.columns(2)
+            col1.plotly_chart(figuras[0], use_container_width=True, key="fl_fig1")
+            col2.plotly_chart(figuras[1], use_container_width=True, key="fl_fig2")
+        elif n_figs == 1:
+            st.plotly_chart(figuras[0], use_container_width=True, key="fl_single")
 
-            if 'Esp. (m)' in tipo_selecionado:
-                fig_esp = px.bar(df_fl, 
-                                x='Data', 
-                                y='Esp. (m)', 
-                                color='Poço', 
-                                title='Espessura de Óleo ao Longo do Tempo', 
-                                color_discrete_sequence=px.colors.qualitative.Dark24,
-                                barmode='group')
-                figuras.append(fig_esp)
+        # Botão de download (dados completos)
+        if figuras:
+            btn_download_multiple(figuras)
 
-            # Aplicar atualizações de layout apenas para as figuras que foram criadas
-            for fig in figuras:
-                fig.update_layout(
-                    xaxis_tickangle=-45,
-                    legend_title_text='Poços',
-                    bargap=0.15,
-                    bargroupgap=0.1,
-                    showlegend=True
-                )
-
-
-            if len(tipo_selecionado) == 3:
-                col1, col2= st.columns(2)
-                col1.plotly_chart(fig_na, use_container_width=True, key="fl_na_col1")
-                col2.plotly_chart(fig_no, use_container_width=True, key="fl_no_col2")
-                st.plotly_chart(fig_esp, use_container_width=True, key="fl_esp_col3")
-            elif len(tipo_selecionado) == 2:
-                col1, col2 = st.columns(2)
-                if 'NA (m)' in tipo_selecionado and 'NO (m)' in tipo_selecionado:
-                    col1.plotly_chart(fig_na, use_container_width=True, key="fl_na_col1_2")
-                    col2.plotly_chart(fig_no, use_container_width=True, key="fl_no_col2_2")
-                elif 'NA (m)' in tipo_selecionado and 'Esp. (m)' in tipo_selecionado:
-                    col1.plotly_chart(fig_na, use_container_width=True, key="fl_na_col1_esp")
-                    col2.plotly_chart(fig_esp, use_container_width=True, key="fl_esp_col2_esp")
-                else:
-                    col1.plotly_chart(fig_no, use_container_width=True, key="fl_no_col1_else")
-                    col2.plotly_chart(fig_esp, use_container_width=True, key="fl_esp_col2_else")
-            else:
-                if 'NA (m)' in tipo_selecionado:
-                    st.plotly_chart(fig_na, use_container_width=True, key="fl_na_single")
-                elif 'NO (m)' in tipo_selecionado:
-                    st.plotly_chart(fig_no, use_container_width=True, key="fl_no_single")
-                else:
-                    st.plotly_chart(fig_esp, use_container_width=True, key="fl_esp_single")
 
 
     elif tipo_grafico == "Volume Produto":
@@ -280,12 +281,19 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
             st.session_state["filtro_colunas_produto"] = []
         
         col1, col2 = st.columns([3, 1],vertical_alignment="center")
-        colunas_escolher = col1.multiselect("Selecione as colunas para o gráfico", options=['Volume Removido SAO (L)', 'Volume Removido Bailer (L)', 'Volume Acumulado (L)'], default=st.session_state["filtro_colunas_produto"], key="filtro_colunas_produto")
+        colunas_escolher = col1.multiselect("Selecione as colunas para o gráfico", options=['Volume Removido SAO (L)', 'Volume Removido Bailer (L)', 'Volume Acumulado (L)'], default=st.session_state["filtro_colunas_produto"] if st.session_state["filtro_colunas_produto"] else ['Volume Removido SAO (L)'], key="filtro_colunas_produto")
+        if not colunas_escolher:
+            st.warning("Por favor, selecione pelo menos uma coluna.")
+            st.stop()
         col2.button("Limpar", key="btn_limpar_colunas_prod", on_click=_clear_state_key, kwargs={"key": "filtro_colunas_produto"})
+
+        figuras = []
 
         if colunas_escolher:
             if 'Volume Acumulado (L)' in colunas_escolher:
                 fig_vol_ac = px.line(df_volume_produto, x='Data', y='Volume Acumulado (L)' ,title='Volume Acumulado ao Longo do Tempo', color_discrete_sequence=['#c44d15'])
+                figuras.append(fig_vol_ac)
+
             if 'Volume Removido SAO (L)' in colunas_escolher:
                 fig_vol_sao = px.bar(
                     df_volume_produto,
@@ -294,6 +302,8 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
                     title='Volume Removido SAO ao Longo do Tempo',
                     color_discrete_sequence=['#156082']
                 )
+                figuras.append(fig_vol_sao)
+
             if 'Volume Removido Bailer (L)' in colunas_escolher:
                 fig_vol_bailer = px.bar(
                     df_volume_produto,
@@ -302,11 +312,16 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
                     title='Volume Removido Bailer ao Longo do Tempo',
                     color_discrete_sequence=['#e17b7b']
                 )
-            if len(colunas_escolher) == 3:
+                figuras.append(fig_vol_bailer)
+            
+            # Exibir gráficos
+            n_figs = len(figuras)
+            if n_figs == 3:
                 col1, col2, col3 = st.columns(3)
                 col1.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado")
                 col2.plotly_chart(fig_vol_sao, use_container_width=True, key="vol_sao")
                 col3.plotly_chart(fig_vol_bailer, use_container_width=True, key="vol_bailer")
+                
             elif len(colunas_escolher) == 2:
                 col1, col2 = st.columns(2)
                 if 'Volume Acumulado (L)' in colunas_escolher and 'Volume Removido SAO (L)' in colunas_escolher:
@@ -325,6 +340,9 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
                     st.plotly_chart(fig_vol_sao, use_container_width=True, key="vol_sao")
                 else:
                     st.plotly_chart(fig_vol_bailer, use_container_width=True, key="vol_bailer")
+
+            if figuras:
+                btn_download_multiple(figuras)
                 
 
 
@@ -353,11 +371,19 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
             st.session_state["filtro_colunas_bombeado"] = []
         
         col1, col2 = st.columns([3, 1],vertical_alignment="center")
-        colunas_escolher = col1.multiselect("Selecione as colunas para o gráfico", options=['Volume Acumulado (L)', 'Volume Bombeado (L)'], default=st.session_state["filtro_colunas_bombeado"], key="filtro_colunas_bombeado")
+        colunas_escolher = col1.multiselect("Selecione as colunas para o gráfico", options=['Volume Acumulado (L)', 'Volume Bombeado (L)'], default=st.session_state["filtro_colunas_bombeado"] if st.session_state["filtro_colunas_bombeado"] else ['Volume Acumulado (L)'], key="filtro_colunas_bombeado")
+        if not colunas_escolher:
+            st.warning("Por favor, selecione pelo menos uma coluna.")
+            st.stop()
         col2.button("Limpar", key="btn_limpar_colunas_bomb", on_click=_clear_state_key, kwargs={"key": "filtro_colunas_bombeado"})
+        
+        figuras = []
+
         if colunas_escolher:
             if 'Volume Acumulado (L)' in colunas_escolher:
                 fig_vol_ac = px.line(df_volume, x='Data', y='Volume Acumulado (L)' ,title='Volume Acumulado ao Longo do Tempo', color_discrete_sequence=['#c44d15'])
+                figuras.append(fig_vol_ac)
+
             if 'Volume Bombeado (L)' in colunas_escolher:
                 fig_vol_bom = px.bar(
                     df_volume,
@@ -366,7 +392,10 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
                     title='Volume Bombeado ao Longo do Tempo',
                     color_discrete_sequence=['#156082']
                 )
-            if len(colunas_escolher) == 2:
+                figuras.append(fig_vol_bom)
+
+            n_figs = len(figuras)
+            if n_figs == 2:
                 col1, col2 = st.columns(2)
                 col1.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado_bomb")
                 col2.plotly_chart(fig_vol_bom, use_container_width=True, key="vol_bombeado")
@@ -375,6 +404,9 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
                     st.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado_bomb")
                 else:
                     st.plotly_chart(fig_vol_bom, use_container_width=True, key="vol_bombeado")
+
+            if figuras:
+                btn_download_multiple(figuras)
 
         else:
             st.warning("Por favor, selecione pelo menos uma coluna para o gráfico.")
