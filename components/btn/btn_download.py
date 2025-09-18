@@ -22,7 +22,7 @@ def fig_to_png_bytes(fig):
         buf.seek(0)
         return buf
     except Exception as e:
-        st.warning(f"PNG não disponível: {e}")
+        print(f"PNG não disponível: {e}")
         return None
 
 def btn(type: str, data, file_name: str, name_btn: str = "Baixar Gráficos"):
