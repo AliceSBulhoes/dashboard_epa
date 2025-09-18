@@ -7,7 +7,7 @@ import seaborn as sns
 import numpy as np
 import plotly.express as px
 from utils import tratando_df, fillna_columns, add_accumulated_column, filter_by_date
-from components.btn import btn_download_multiple
+from components.btn import btn_download_multiple, btn_download_excel
 
 # Helpers para limpar filtros via callbacks
 def _clear_state_key(key: str):
@@ -254,6 +254,16 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
         if figuras:
             btn_download_multiple(figuras)
 
+        # --------- ÁREA DE DADOS BRUTOS E DOWNLOAD EXCEL ---------
+        st.write("---")
+        st.write("### Dados Brutos - Fase Livre")
+        
+        # Mostrar dataframe filtrado
+        st.dataframe(df_fl, use_container_width=True)
+        
+        # Botão para download em Excel
+        btn_download_excel(df_fl, "dados_fase_livre.xlsx")
+
 
 
     elif tipo_grafico == "Volume Produto":
@@ -343,6 +353,16 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
 
             if figuras:
                 btn_download_multiple(figuras)
+
+        # --------- ÁREA DE DADOS BRUTOS E DOWNLOAD EXCEL ---------
+        st.write("---")
+        st.write("### Dados Brutos - Volume Produto")
+        
+        # Mostrar dataframe filtrado
+        st.dataframe(df_volume_produto, use_container_width=True)
+        
+        # Botão para download em Excel
+        btn_download_excel(df_volume_produto, "dados_volume_produto.xlsx")
                 
 
 
@@ -408,6 +428,15 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
             if figuras:
                 btn_download_multiple(figuras)
 
-        else:
-            st.warning("Por favor, selecione pelo menos uma coluna para o gráfico.")
-   
+        # --------- ÁREA DE DADOS BRUTOS E DOWNLOAD EXCEL ---------
+        st.write("---")
+        st.write("### Dados Brutos - Volume Bombeado")
+        
+        # Mostrar dataframe filtrado
+        st.dataframe(df_volume, use_container_width=True)
+        
+        # Botão para download em Excel
+        btn_download_excel(df_volume, "dados_volume_bombeado.xlsx")
+
+    else:
+        st.warning("Por favor, selecione pelo menos uma coluna para o gráfico.")

@@ -1,3 +1,3 @@
-from .btn import btn_download_multiple
+from .btn import btn_download_multiple, btn_download_excel
 
-__all__ = ["btn_download_multiple"]
+__all__ = ["btn_download_multiple", "btn_download_excel"]
