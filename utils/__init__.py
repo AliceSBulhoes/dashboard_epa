@@ -7,6 +7,7 @@ from .date_filters import (
 	add_cumulative,
 	full_period_index,
 )
+from .chart_functions import create_dual_y_axis_chart, group_data_by_period
 
 __all__ = [
 	'tratando_df',
@@ -19,4 +20,6 @@ __all__ = [
 	'aggregate_by_period',
 	'add_cumulative',
 	'full_period_index',
+	'create_dual_y_axis_chart',
+	'group_data_by_period',
 ]

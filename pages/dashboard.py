@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import plotly.express as px
-from utils import tratando_df, fillna_columns, add_accumulated_column, filter_by_date
+import plotly.graph_objects as go
+from utils import tratando_df, fillna_columns, add_accumulated_column, filter_by_date, create_dual_y_axis_chart, group_data_by_period
 from components.btn import btn_download_multiple, btn_download_excel
 
 # Helpers para limpar filtros via callbacks
@@ -161,6 +162,16 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
     df_fl = filter_by_date(df_fl, 'Data', data_inicio, data_fim)
     df_volume_produto = filter_by_date(df_volume_produto, 'Data', data_inicio, data_fim)
 
+    # ----- Agrupamento Temporal -----
+    st.sidebar.write("### Agrupamento Temporal")
+    agrupamento_temporal = st.sidebar.selectbox(
+        "Agrupar dados por:",
+        options=["day", "week", "month"],
+        format_func=lambda x: {"day": "Dia", "week": "Semana", "month": "Mês"}[x],
+        index=0,
+        help="Agrupa e soma os valores por período selecionado"
+    )
+
 
     if tipo_grafico == "FL":
         st.write("## Gráficos de Fase Livre")
@@ -282,8 +293,18 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
     elif tipo_grafico == "Volume Produto":
         st.write("## Gráficos de Volume Produto")
 
-        # -------- Valor Acumulado --------
+        # -------- Aplicar Agrupamento Temporal --------
         df_volume_produto = fillna_columns(df_volume_produto, ['Volume Removido SAO (L)', 'Volume Removido Bailer (L)'], 0)
+        
+        # Aplicar agrupamento temporal aos dados
+        if agrupamento_temporal != "day":
+            df_volume_produto = group_data_by_period(
+                df_volume_produto, 
+                'Data', 
+                ['Volume Removido SAO (L)', 'Volume Removido Bailer (L)'], 
+                agrupamento_temporal
+            )
+        
         df_volume_produto = add_accumulated_column(df_volume_produto, ['Volume Removido SAO (L)', 'Volume Removido Bailer (L)'], 'Volume Acumulado (L)')
 
         # ---------------------- Cards -----------------------
@@ -304,7 +325,7 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
             st.session_state["filtro_colunas_produto"] = []
         
         col1, col2 = st.columns([3, 1],vertical_alignment="center")
-        colunas_escolher = col1.multiselect("Selecione as colunas para o gráfico", options=['Volume Removido SAO (L)', 'Volume Removido Bailer (L)', 'Volume Acumulado (L)'], default=st.session_state["filtro_colunas_produto"] if st.session_state["filtro_colunas_produto"] else ['Volume Removido SAO (L)'], key="filtro_colunas_produto")
+        colunas_escolher = col1.multiselect("Selecione as colunas para o gráfico", options=['Volume Removido SAO (L)', 'Volume Removido Bailer (L)', 'Volume Acumulado (L)', 'Dual Y-Axis SAO', 'Dual Y-Axis Bailer'], default=st.session_state["filtro_colunas_produto"] if st.session_state["filtro_colunas_produto"] else ['Volume Removido SAO (L)'], key="filtro_colunas_produto")
         if not colunas_escolher:
             st.warning("Por favor, selecione pelo menos uma coluna.")
             st.stop()
@@ -336,33 +357,60 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
                     color_discrete_sequence=['#e17b7b']
                 )
                 figuras.append(fig_vol_bailer)
+
+            # Gráficos com duplo eixo Y
+            if 'Dual Y-Axis SAO' in colunas_escolher:
+                fig_dual_sao = create_dual_y_axis_chart(
+                    df_volume_produto,
+                    x_col='Data',
+                    y_col='Volume Removido SAO (L)',
+                    title_prefix='Volume Removido SAO',
+                    color_primary='#156082',
+                    color_secondary='#c44d15',
+                    grouping=agrupamento_temporal
+                )
+                figuras.append(fig_dual_sao)
+
+            if 'Dual Y-Axis Bailer' in colunas_escolher:
+                fig_dual_bailer = create_dual_y_axis_chart(
+                    df_volume_produto,
+                    x_col='Data',
+                    y_col='Volume Removido Bailer (L)',
+                    title_prefix='Volume Removido Bailer',
+                    color_primary='#e17b7b',
+                    color_secondary='#c44d15',
+                    grouping=agrupamento_temporal
+                )
+                figuras.append(fig_dual_bailer)
             
             # Exibir gráficos
             n_figs = len(figuras)
-            if n_figs == 3:
-                col1, col2, col3 = st.columns(3)
-                col1.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado")
-                col2.plotly_chart(fig_vol_sao, use_container_width=True, key="vol_sao")
-                col3.plotly_chart(fig_vol_bailer, use_container_width=True, key="vol_bailer")
-                
-            elif len(colunas_escolher) == 2:
+            if n_figs == 1:
+                st.plotly_chart(figuras[0], use_container_width=True, key="single_vol_chart")
+            elif n_figs == 2:
                 col1, col2 = st.columns(2)
-                if 'Volume Acumulado (L)' in colunas_escolher and 'Volume Removido SAO (L)' in colunas_escolher:
-                    col1.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado")
-                    col2.plotly_chart(fig_vol_sao, use_container_width=True, key="vol_sao")
-                elif 'Volume Acumulado (L)' in colunas_escolher and 'Volume Removido Bailer (L)' in colunas_escolher:
-                    col1.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado")
-                    col2.plotly_chart(fig_vol_bailer, use_container_width=True, key="vol_bailer")
-                else:
-                    col1.plotly_chart(fig_vol_sao, use_container_width=True, key="vol_sao")
-                    col2.plotly_chart(fig_vol_bailer, use_container_width=True, key="vol_bailer")
+                col1.plotly_chart(figuras[0], use_container_width=True, key="vol_chart_1")
+                col2.plotly_chart(figuras[1], use_container_width=True, key="vol_chart_2")
+            elif n_figs == 3:
+                col1, col2, col3 = st.columns(3)
+                col1.plotly_chart(figuras[0], use_container_width=True, key="vol_chart_1")
+                col2.plotly_chart(figuras[1], use_container_width=True, key="vol_chart_2")
+                col3.plotly_chart(figuras[2], use_container_width=True, key="vol_chart_3")
+            elif n_figs == 4:
+                col1, col2 = st.columns(2)
+                col1.plotly_chart(figuras[0], use_container_width=True, key="vol_chart_1")
+                col2.plotly_chart(figuras[1], use_container_width=True, key="vol_chart_2")
+                col1.plotly_chart(figuras[2], use_container_width=True, key="vol_chart_3")
+                col2.plotly_chart(figuras[3], use_container_width=True, key="vol_chart_4")
             else:
-                if 'Volume Acumulado (L)' in colunas_escolher:
-                    st.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado")
-                elif 'Volume Removido SAO (L)' in colunas_escolher:
-                    st.plotly_chart(fig_vol_sao, use_container_width=True, key="vol_sao")
-                else:
-                    st.plotly_chart(fig_vol_bailer, use_container_width=True, key="vol_bailer")
+                # Para mais de 4 gráficos, exibir em pares
+                for i in range(0, n_figs, 2):
+                    if i + 1 < n_figs:
+                        col1, col2 = st.columns(2)
+                        col1.plotly_chart(figuras[i], use_container_width=True, key=f"vol_chart_{i}")
+                        col2.plotly_chart(figuras[i+1], use_container_width=True, key=f"vol_chart_{i+1}")
+                    else:
+                        st.plotly_chart(figuras[i], use_container_width=True, key=f"vol_chart_{i}")
 
             if figuras:
                 btn_download_multiple(figuras)
@@ -382,8 +430,18 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
     elif tipo_grafico == "Volume Bombeado":
         st.write("## Gráficos de Volume Bombeado")
 
-        # -------- Valor Acumulado --------
+        # -------- Aplicar Agrupamento Temporal --------
         df_volume = fillna_columns(df_volume, ['Volume Bombeado (L)'], 0)
+        
+        # Aplicar agrupamento temporal aos dados
+        if agrupamento_temporal != "day":
+            df_volume = group_data_by_period(
+                df_volume, 
+                'Data', 
+                ['Volume Bombeado (L)'], 
+                agrupamento_temporal
+            )
+        
         df_volume = add_accumulated_column(df_volume, ['Volume Bombeado (L)'], 'Volume Acumulado (L)')
         
         # ---------------------- Cards -----------------------
@@ -404,7 +462,7 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
             st.session_state["filtro_colunas_bombeado"] = []
         
         col1, col2 = st.columns([3, 1],vertical_alignment="center")
-        colunas_escolher = col1.multiselect("Selecione as colunas para o gráfico", options=['Volume Acumulado (L)', 'Volume Bombeado (L)'], default=st.session_state["filtro_colunas_bombeado"] if st.session_state["filtro_colunas_bombeado"] else ['Volume Acumulado (L)'], key="filtro_colunas_bombeado")
+        colunas_escolher = col1.multiselect("Selecione as colunas para o gráfico", options=['Volume Acumulado (L)', 'Volume Bombeado (L)', 'Dual Y-Axis Bombeado'], default=st.session_state["filtro_colunas_bombeado"] if st.session_state["filtro_colunas_bombeado"] else ['Volume Acumulado (L)'], key="filtro_colunas_bombeado")
         if not colunas_escolher:
             st.warning("Por favor, selecione pelo menos uma coluna.")
             st.stop()
@@ -427,16 +485,40 @@ if df_fl is not None and df_volume_produto is not None and df_volume is not None
                 )
                 figuras.append(fig_vol_bom)
 
+            # Gráfico com duplo eixo Y para Volume Bombeado
+            if 'Dual Y-Axis Bombeado' in colunas_escolher:
+                fig_dual_bombeado = create_dual_y_axis_chart(
+                    df_volume,
+                    x_col='Data',
+                    y_col='Volume Bombeado (L)',
+                    title_prefix='Volume Bombeado',
+                    color_primary='#156082',
+                    color_secondary='#c44d15',
+                    grouping=agrupamento_temporal
+                )
+                figuras.append(fig_dual_bombeado)
+
             n_figs = len(figuras)
-            if n_figs == 2:
+            if n_figs == 1:
+                st.plotly_chart(figuras[0], use_container_width=True, key="single_bomb_chart")
+            elif n_figs == 2:
                 col1, col2 = st.columns(2)
-                col1.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado_bomb")
-                col2.plotly_chart(fig_vol_bom, use_container_width=True, key="vol_bombeado")
+                col1.plotly_chart(figuras[0], use_container_width=True, key="bomb_chart_1")
+                col2.plotly_chart(figuras[1], use_container_width=True, key="bomb_chart_2")
+            elif n_figs == 3:
+                col1, col2 = st.columns(2)
+                col1.plotly_chart(figuras[0], use_container_width=True, key="bomb_chart_1")
+                col2.plotly_chart(figuras[1], use_container_width=True, key="bomb_chart_2")
+                st.plotly_chart(figuras[2], use_container_width=True, key="bomb_chart_3")
             else:
-                if 'Volume Acumulado (L)' in colunas_escolher:
-                    st.plotly_chart(fig_vol_ac, use_container_width=True, key="vol_acumulado_bomb")
-                else:
-                    st.plotly_chart(fig_vol_bom, use_container_width=True, key="vol_bombeado")
+                # Para mais gráficos, exibir em pares
+                for i in range(0, n_figs, 2):
+                    if i + 1 < n_figs:
+                        col1, col2 = st.columns(2)
+                        col1.plotly_chart(figuras[i], use_container_width=True, key=f"bomb_chart_{i}")
+                        col2.plotly_chart(figuras[i+1], use_container_width=True, key=f"bomb_chart_{i+1}")
+                    else:
+                        st.plotly_chart(figuras[i], use_container_width=True, key=f"bomb_chart_{i}")
 
             if figuras:
                 btn_download_multiple(figuras)
