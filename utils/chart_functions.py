@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 
-def group_data_by_period(df, x_col, y_cols, grouping="day"):
+def group_data_by_period(df, x_col, y_cols, grouping="day", group_by_col=None):
     """
     Agrupa dados por período temporal (dia, semana, mês).
     
@@ -13,6 +13,7 @@ def group_data_by_period(df, x_col, y_cols, grouping="day"):
         x_col: nome da coluna de data
         y_cols: lista de colunas numéricas para agrupar
         grouping: 'day', 'week' ou 'month'
+        group_by_col: coluna adicional para agrupar (ex: 'Poço', 'Ponto')
     
     Returns:
         DataFrame agrupado
@@ -30,20 +31,55 @@ def group_data_by_period(df, x_col, y_cols, grouping="day"):
     }
     freq = freq_map.get(grouping, "D")
     
-    # Preparar dicionário de agregação
-    agg_dict = {}
-    for col in y_cols:
-        if col in df_copy.columns:
-            agg_dict[col] = 'sum'
-    
-    # Copiar outras colunas não-numéricas (mantém a primeira ocorrência)
-    for col in df_copy.columns:
-        if col != x_col and col not in y_cols:
-            if df_copy[col].dtype == 'object' or df_copy[col].dtype == 'category':
-                agg_dict[col] = 'first'
-    
-    # Agrupar por período
-    df_grouped = df_copy.set_index(x_col).groupby(pd.Grouper(freq=freq)).agg(agg_dict).reset_index()
+    # Se temos uma coluna de agrupamento adicional (ex: Poço)
+    if group_by_col and group_by_col in df_copy.columns:
+        # Separar dados de 'Acumulado' e outros
+        df_acumulado = df_copy[df_copy[group_by_col] == 'Acumulado'].copy()
+        df_outros = df_copy[df_copy[group_by_col] != 'Acumulado'].copy()
+        
+        # Para dados normais (não acumulado): somar
+        agg_dict_sum = {}
+        for col in y_cols:
+            if col in df_outros.columns:
+                agg_dict_sum[col] = 'sum'
+        
+        if not df_outros.empty:
+            df_grouped_outros = df_outros.set_index(x_col).groupby([pd.Grouper(freq=freq), group_by_col]).agg(agg_dict_sum).reset_index()
+        else:
+            df_grouped_outros = pd.DataFrame()
+        
+        # Para dados de 'Acumulado': pegar último valor do período (já é acumulado)
+        if not df_acumulado.empty:
+            # Para cada período, pegar a última data (valor mais recente/máximo)
+            df_acumulado_sorted = df_acumulado.sort_values(by=x_col)
+            df_grouped_acum = df_acumulado_sorted.set_index(x_col).groupby([pd.Grouper(freq=freq), group_by_col]).last().reset_index()
+        else:
+            df_grouped_acum = pd.DataFrame()
+        
+        # Combinar os dois DataFrames
+        if not df_grouped_outros.empty and not df_grouped_acum.empty:
+            df_grouped = pd.concat([df_grouped_outros, df_grouped_acum], ignore_index=True)
+        elif not df_grouped_outros.empty:
+            df_grouped = df_grouped_outros
+        elif not df_grouped_acum.empty:
+            df_grouped = df_grouped_acum
+        else:
+            df_grouped = pd.DataFrame()
+    else:
+        # Preparar dicionário de agregação
+        agg_dict = {}
+        for col in y_cols:
+            if col in df_copy.columns:
+                agg_dict[col] = 'sum'
+        
+        # Copiar outras colunas não-numéricas (mantém a primeira ocorrência)
+        for col in df_copy.columns:
+            if col != x_col and col not in y_cols:
+                if df_copy[col].dtype == 'object' or df_copy[col].dtype == 'category':
+                    agg_dict[col] = 'first'
+        
+        # Agrupar apenas por período
+        df_grouped = df_copy.set_index(x_col).groupby(pd.Grouper(freq=freq)).agg(agg_dict).reset_index()
     
     # Remover períodos sem dados (todos os valores numéricos são 0 ou NaN)
     numeric_cols = [col for col in y_cols if col in df_grouped.columns]
@@ -172,4 +208,171 @@ def create_dual_y_axis_chart(df, x_col, y_col, title_prefix,
     # renomear primeira trace
     fig.data[0].name = f'{title_prefix} Individual'
 
+    return fig
+
+
+def create_poco_dual_y_axis_chart(df, title_prefix="Volume Bombeado por Poço",
+                                  color_palette=None, num_ticks=5, pad_rel=0.08, 
+                                  clip_markers=False, grouping="day"):
+    """
+    Cria gráfico com duplo eixo Y para dados de poços.
+    
+    Args:
+        df: DataFrame com colunas 'Data', 'Poço', 'Volume Bombeado (m³)'
+        title_prefix: Prefixo do título do gráfico
+        color_palette: Lista de cores para diferentes poços
+        num_ticks: Número de ticks nos eixos Y
+        pad_rel: Padding relativo para os eixos Y
+        clip_markers: Se True, permite marcadores fora da área do plot
+        grouping: Agrupamento temporal ('day', 'week', 'month')
+    
+    Returns:
+        Figura plotly com duplo eixo Y
+    """
+    if df.empty:
+        return go.Figure()
+    
+    df_work = df.copy()
+    df_work['Data'] = pd.to_datetime(df_work['Data'])
+    
+    # Converter 0 para NaN para não plotar barras vazias
+    df_work.loc[df_work['Volume Bombeado (m³)'] == 0, 'Volume Bombeado (m³)'] = np.nan
+    
+    # Separar dados de poços individuais e acumulado
+    df_pocos = df_work[df_work['Poço'] != 'Acumulado'].copy()
+    df_acumulado = df_work[df_work['Poço'] == 'Acumulado'].copy()
+    
+    # Aplicar agrupamento temporal se necessário
+    if grouping != "day":
+        if not df_pocos.empty:
+            df_pocos = group_data_by_period(df_pocos, 'Data', ['Volume Bombeado (m³)'], grouping)
+        if not df_acumulado.empty:
+            df_acumulado = group_data_by_period(df_acumulado, 'Data', ['Volume Bombeado (m³)'], grouping)
+    
+    # Ordenar por data
+    df_pocos = df_pocos.sort_values(by='Data')
+    df_acumulado = df_acumulado.sort_values(by='Data')
+    
+    # Definir paleta de cores para poços
+    if color_palette is None:
+        color_palette = px.colors.qualitative.Set3
+    
+    # Criar figura
+    fig = go.Figure()
+    
+    # Adicionar barras para cada poço (lado esquerdo)
+    if not df_pocos.empty:
+        pocos_unicos = df_pocos['Poço'].unique()
+        
+        for i, poco in enumerate(pocos_unicos):
+            df_poco = df_pocos[df_pocos['Poço'] == poco]
+            color = color_palette[i % len(color_palette)]
+            
+            fig.add_trace(go.Bar(
+                x=df_poco['Data'],
+                y=df_poco['Volume Bombeado (m³)'],
+                name=poco,
+                marker_color=color,
+                yaxis="y",
+                offsetgroup=i,  # Para barras lado a lado
+                legendgroup="pocos",
+                legendgrouptitle_text="Poços Individuais"
+            ))
+    
+    # Adicionar linha para acumulado (lado direito)
+    if not df_acumulado.empty:
+        fig.add_trace(go.Scatter(
+            x=df_acumulado['Data'],
+            y=df_acumulado['Volume Bombeado (m³)'],
+            mode='lines+markers',
+            name='Acumulado',
+            line=dict(color='#c44d15', width=3),
+            marker=dict(size=6, color='#c44d15'),
+            yaxis="y2",
+            legendgroup="acumulado",
+            legendgrouptitle_text="Volume Acumulado"
+        ))
+    
+    # Calcular ranges para os eixos Y
+    y1_values = df_pocos['Volume Bombeado (m³)'].dropna() if not df_pocos.empty else pd.Series([0])
+    y2_values = df_acumulado['Volume Bombeado (m³)'].dropna() if not df_acumulado.empty else pd.Series([0])
+    
+    if len(y1_values) == 0:
+        y1_values = pd.Series([0])
+    if len(y2_values) == 0:
+        y2_values = pd.Series([0])
+    
+    y1_min, y1_max = float(y1_values.min()), float(y1_values.max())
+    y2_min, y2_max = float(y2_values.min()), float(y2_values.max())
+    
+    # Evitar divisão por zero
+    if y1_max == y1_min:
+        y1_max = y1_min + 1.0
+    if y2_max == y2_min:
+        y2_max = y2_min + 1.0
+    
+    # Aplicar padding
+    span1 = y1_max - y1_min
+    span2 = y2_max - y2_min
+    pad1 = span1 * pad_rel
+    pad2 = span2 * pad_rel
+    
+    y1_low = y1_min - pad1
+    y1_high = y1_max + pad1
+    y2_low = y2_min - pad2
+    y2_high = y2_max + pad2
+    
+    # Configurar ticks alinhados
+    def transform_y_to_y2(y):
+        return y2_low + (y - y1_low) * (y2_high - y2_low) / (y1_high - y1_low)
+    
+    left_tickvals = np.linspace(y1_low, y1_high, num_ticks)
+    right_tickvals = [transform_y_to_y2(v) for v in left_tickvals]
+    
+    # Formatação dos textos dos ticks
+    def fmt_tick(v):
+        if abs(v) >= 1000:
+            return f"{int(round(v)):,}"
+        if abs(v - round(v)) < 1e-6:
+            return str(int(round(v)))
+        return f"{round(v, 2)}"
+    
+    left_ticktext = [fmt_tick(v) for v in left_tickvals]
+    right_ticktext = [fmt_tick(v) for v in right_tickvals]
+    
+    # Configurar layout
+    fig.update_layout(
+        title=f'{title_prefix} - Individual vs Acumulado',
+        xaxis=dict(title='Data', tickangle=-45),
+        yaxis=dict(
+            title='Volume Bombeado Individual (m³)',
+            range=[y1_low, y1_high],
+            tickmode="array",
+            tickvals=left_tickvals,
+            ticktext=left_ticktext
+        ),
+        yaxis2=dict(
+            title='Volume Bombeado Acumulado (m³)',
+            overlaying="y",
+            side="right",
+            showgrid=False,
+            tickmode="array",
+            tickvals=right_tickvals,
+            ticktext=right_ticktext,
+            range=[y2_low, y2_high]
+        ),
+        barmode='group',  # Barras lado a lado
+        dragmode='zoom',
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.3,
+            xanchor="center",
+            x=0.5,
+            title_text='Séries'
+        ),
+        hovermode='x unified',
+        margin=dict(b=100)
+    )
+    
     return fig

@@ -1,0 +1,967 @@
+/* ================================================================
+   OBSERVATÓRIO CSPS - COMPREHENSIVE STYLESHEET
+   
+   This file contains all CSS styles for the Streamlit application
+   organized by component/section for better maintainability
+   ================================================================ */
+
+
+
+
+/* ================================================================
+   CSS CUSTOM PROPERTIES (VARIABLES)
+   Vale color palette definitions for consistent theming
+   ================================================================ */
+
+:root {
+    /* Vale Color Palette */
+    --verde-vale: #007E7A;
+    --amarelo-vale: #ECB11F;
+    --cinza-vale: #747678;
+    --darker-cinza-vale: #67696B;
+    --laranja-vale: #E37222;
+    --vermelho-vale: #BB133E;
+    --violeta-vale: #3D7EDB;
+    --azul-vale: #00B0CA;
+    --verde-claro-vale: #69BE28;
+    --branco: #ffffff;
+    
+    /* Additional semantic colors for consistent usage */
+    --primary-text: #2c3e50;
+    --secondary-text: #34495e;
+    --header-text-color: #007e7a;
+    --success-color: #00A859;
+    --warning-color: #f0ad4e;
+    --danger-color: #E31E25;
+    --danger-dark: #C51E25;
+    
+    /* Additional neutral and system colors */
+    --light-gray: #e0e0e0;
+    --very-light-gray: #F5F5F5;
+    --dark-green: #005A57;
+    --light-success: #e8f7ee;
+    --light-danger: #fde8e8;
+    --light-info: #e8f1fd;
+    --background-light: #f8f9fa;
+    --border-light: #e9ecef;
+    --ag-background: #FAFAFA;
+    --ag-border: #00000066;
+    --ag-header-bg: #4747471D;
+    --ag-header-fg: #1D1D1D;
+    --ag-odd-row: #EBEBEB;
+    
+    /* Gradient helper colors */
+    --success-light: #33B569;
+    --success-lighter: #66C679;
+    --warning-light: #f4bd63;
+    --danger-light: #E8454B;
+    --danger-dark-light: #D4434A;
+    --border-hover: #dee2e6;
+    --primary-blue: #007bff;
+}
+
+
+[data-testid="stAppViewContainer"] {
+    color: var(--cinza-vale);
+}
+
+/* ================================================================
+   STREAMLIT INPUT COMPONENTS STYLING
+   Font sizes, weights, and colors for form elements
+   ================================================================ */
+
+/* Radio buttons styling - 24px font size */
+.stRadio > label {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+}
+
+.stRadio > div {
+    font-size: 20px !important;
+}
+
+.stRadio > div > label {
+    font-size: 22px !important;
+    font-weight: 500 !important;
+}
+
+[data-testid="stRadio"] > div > label {
+    align-items: center;
+} 
+
+[data-testid="stRadio"] > div > label > div > div > p {
+    font-size: 22px !important;
+}
+
+/* Selectbox styling - 24px font size */
+.stSelectbox > label {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+.stSelectbox > div > div {
+    font-size: 18px !important;
+}
+
+.stSelectbox > div > div > div {
+    font-size: 18px !important;
+}
+
+/* Multiselect styling - 24px font size */
+.stMultiSelect > label {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+.stMultiSelect > div > div {
+    font-size: 18px !important;
+}
+
+.stMultiSelect > div > div > div {
+    font-size: 18px !important;
+}
+
+/* General labels styling - 24px font size */
+.stMarkdown label {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+/* Slider labels */
+.stSlider > label {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+/* Number input labels */
+.stNumberInput > label {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+/* Text input labels */
+.stTextInput > label {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+/* Date input labels */
+.stDateInput > label {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+/* Time input labels */
+.stTimeInput > label {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+/* File uploader labels */
+.stFileUploader > label {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+/* Checkbox labels */
+.stCheckbox > label {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+.stCheckbox > div {
+    font-size: 20px !important;
+}
+
+.stCheckbox > div > label {
+    font-size: 20px !important;
+    font-weight: 500 !important;
+}
+
+/* Button styling for consistency */
+.stButton > button {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px !important;
+}
+
+
+
+
+/* ================================================================
+   SIDEBAR STYLING AND NAVIGATION
+   Background colors, logo, navigation items and hover effects
+   ================================================================ */
+
+/* Sidebar background - Amarelo Vale */
+.css-1d391kg, [data-testid="stSidebar"] > div:first-child {
+    background-color: #c7e5ea !important;
+}
+
+/* Sidebar content container */
+[data-testid="stSidebar"] .css-1d391kg {
+    background-color: #c7e5ea !important;
+}
+
+/* Sidebar elements styling */
+/*
+.css-1d391kg .stSelectbox > label,
+.css-1d391kg .stMultiSelect > label,
+.css-1d391kg .stRadio > label,
+.css-1d391kg .stSlider > label,
+.css-1d391kg .stNumberInput > label,
+.css-1d391kg .stTextInput > label,
+.css-1d391kg .stCheckbox > label {
+    font-size: 22px !important;
+    font-weight: 600 !important;
+    color: var(--primary-text) !important;
+}
+
+/* Sidebar selectbox content */
+/*
+.css-1d391kg .stSelectbox > div > div,
+.css-1d391kg .stMultiSelect > div > div {
+    font-size: 16px !important;
+}
+
+/* Custom sidebar header styling */
+.sidebar-header {
+    text-align: center;
+    padding: 1rem 0;
+    border-bottom: 2px solid var(--light-gray);
+    margin-bottom: 1rem;
+}
+
+/* Logo container creation */
+[data-testid="stSidebarLogo"] {
+    content: "";
+    display: block;
+    height: 120px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100%;
+    margin-top: 25px;
+}
+
+[data-testid="stSidebarHeader"] {
+    margin-top: 20px;
+}
+
+[data-testid="stSidebarUserContent"] {
+    margin-top: 50px;
+}
+
+[data-testid="stSidebarNav"] {
+    padding-top: 20px;
+}
+
+[data-testid="stSidebarNav"] > ul {
+    padding-top: 0px;
+}
+
+[data-testid="stSidebarNav"] > ul > li {
+    margin-top: 8px;
+}
+
+/* Navigation buttons - Verde Vale background with white text */
+[data-testid="stVerticalBlock"] > div > div > div > a {
+    background-color: var(--verde-vale) !important;
+    color: var(--branco) !important;
+    padding: 4px 12px;
+    margin: 0px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    display: block;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--verde-vale);
+    display: inline-flex;
+}
+
+[data-testid="stVerticalBlock"] > div > div > div > a > span > span,
+[data-testid="stVerticalBlock"] > div > div > div > a > span {
+    color: inherit !important
+}
+
+[data-testid="stSidebarNavLink"] {
+    background-color: var(--verde-vale) !important;
+    color: var(--branco) !important;
+}
+
+/* Navigation buttons hover effect */
+/*
+[data-testid="stVerticalBlock"] > div > div > div > a:hover {
+    background-color: var(--dark-green) !important;
+    color: var(--branco) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    border-color: var(--dark-green) !important;
+}
+*/
+
+[data-testid="stVerticalBlock"] > div > div > div > a:hover > span > span{
+    color: inherit !important
+}
+
+/* Active navigation button */
+[data-testid="stSidebarNav"] > ul > li > a[aria-current="page"] {
+    background-color: var(--branco) !important;
+    color: var(--verde-vale) !important;
+    border-color: var(--verde-vale) !important;
+    font-weight: 600 !important;
+}
+
+/* Active button hover */
+[data-testid="stSidebarNav"] > ul > li > a[aria-current="page"]:hover {
+    background-color: var(--very-light-gray) !important;
+    color: var(--dark-green) !important;
+}
+
+/* Sidebar text elements - white font */
+/*
+[data-testid="stSidebar"] .stMarkdown, 
+[data-testid="stSidebar"] .stText,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] .css-10trblm {
+    color: var(--branco) !important;
+}
+
+/* Sidebar widget labels */
+/*
+[data-testid="stSidebar"] .stSelectbox > label,
+[data-testid="stSidebar"] .stMultiSelect > label,
+[data-testid="stSidebar"] .stRadio > label,
+[data-testid="stSidebar"] .stSlider > label,
+[data-testid="stSidebar"] .stNumberInput > label,
+[data-testid="stSidebar"] .stTextInput > label,
+[data-testid="stSidebar"] .stCheckbox > label {
+    color: var(--branco) !important;
+    font-weight: 600 !important;
+}
+
+/* Navigation group background */
+[data-testid="stSidebarNavItems"] > div {
+    background-color: var(--laranja-vale);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 10px 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Fix nav items - remove transparency and make solid */
+[data-testid="stSidebarNav"] > ul > li > a {
+    background-color: transparent !important;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Nav items hover - let app.py handle the colors */
+[data-testid="stSidebarNav"] > ul > li > a:hover {
+    transform: translateX(4px);
+    opacity: 1 !important;
+}
+
+
+
+
+/* ================================================================
+   TYPOGRAPHY AND HEADERS
+   Font styling for headings, paragraphs, and text elements
+   ================================================================ */
+
+/* Headers styling */
+h1 {
+    color: var(--header-text-color) !important;
+    font-weight: 700 !important;
+}
+
+h2 {
+    color: var(--header-text-color) !important;
+    font-weight: 600 !important;
+}
+
+h3 {
+    color: var(--header-text-color) !important;
+    font-weight: 600 !important;
+}
+
+/* Widget labels styling */
+[data-testid="stWidgetLabel"] > div > p {
+    color: var(--cinza-vale) !important;
+    font-weight: 600 !important;
+    font-size: 24px !important;
+}
+
+
+
+
+/* ================================================================
+   COMPONENT COLORS AND BACKGROUNDS
+   Vale-specific colors for various components
+   ================================================================ */
+
+/* Sidebar navigation items and component colors */
+[data-testid="stSidebarNavItems"] > div > li > div > a > span,
+[data-testid="stNavSectionHeader"],
+[data-testid="stSelectbox"] > div > div,
+[data-testid="stMultiSelect"] > div > div > div > div > div {
+    color: var(--branco) !important;
+    font-weight: 600 !important;
+}
+
+[data-testid="stSelectbox"] > div > div,
+[data-testid="stMultiSelect"] > div > div > div {
+    background-color: var(--verde-vale) !important;
+}
+
+[data-testid="stSelectbox"] > div > div:hover {
+    color: var(--cinza-vale) !important;
+}
+
+[data-testid="stMultiSelect"] > div > div > div > div > span {
+    background-color: var(--amarelo-vale) !important;
+}
+
+[data-testid="stMultiSelect"] > div > div > div > div > span:hover {
+    background-color: rgba(237, 177, 17, 0.7) !important;
+}
+
+
+
+
+/* ================================================================
+   INTERACTIVE HOVER EFFECTS
+   Hover states for various components using Vale color scheme
+   ================================================================ */
+
+/* Sidebar navigation items hover effects */
+[data-testid="stSidebarNav"] > ul > li > a:hover {
+    background-color: var(--success-color) !important;
+    color: var(--branco) !important;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 168, 89, 0.4);
+}
+
+/* Sidebar navigation links - let app.py handle the styling */
+[data-testid="stSidebarNavLink"] {
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Main content selectboxes - multiple selectors for compatibility */
+.stSelectbox > div > div,
+.stSelectbox > div > div > div,
+.stSelectbox [data-baseweb="select"] > div,
+.stSelectbox [role="button"] {
+    transition: all 0.3s ease;
+}
+
+.stSelectbox > div > div:hover,
+.stSelectbox > div > div > div:hover,
+.stSelectbox [data-baseweb="select"] > div:hover,
+.stSelectbox [role="button"]:hover {
+    background-color: rgba(0, 176, 202, 0.9) !important;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 176, 202, 0.3);
+    transition: all 0.3s ease;
+    border-radius: 30px;
+}
+
+/* Sidebar selectboxes - multiple selectors for compatibility */
+/*
+[data-testid="stSidebar"] .stSelectbox > div > div,
+[data-testid="stSidebar"] .stSelectbox > div > div > div,
+[data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div,
+[data-testid="stSidebar"] .stSelectbox [role="button"] {
+    transition: background-color 0.3s ease, box-shadow 0.2s ease;
+}
+
+[data-testid="stSidebar"] .stSelectbox > div > div:hover,
+[data-testid="stSidebar"] .stSelectbox > div > div > div:hover,
+[data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div:hover,
+[data-testid="stSidebar"] .stSelectbox [role="button"]:hover {
+    background-color: rgba(0, 168, 89, 0.7) !important;
+    box-shadow: 0 2px 8px rgba(0, 168, 89, 0.4);
+}
+
+/* Main content multiselect - multiple selectors for compatibility */
+.stMultiSelect > div > div,
+.stMultiSelect > div > div > div,
+.stMultiSelect [data-baseweb="select"] > div,
+.stMultiSelect [role="button"] {
+    transition: all 0.3s ease;
+}
+
+.stMultiSelect > div > div:hover,
+.stMultiSelect > div > div > div:hover,
+.stMultiSelect [data-baseweb="select"] > div:hover,
+.stDateInput > div > div:hover,
+.stDateInput > div > div > div:hover,
+.stDateInput [data-baseweb="base-input"] > div:hover {
+    background-color: rgba(0, 176, 202, 0.9) !important;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 176, 202, 0.3);
+    transition: all 0.3s ease;
+    border-radius: 30px;
+}
+
+/* Sidebar multiselect - multiple selectors for compatibility */
+/*
+[data-testid="stSidebar"] .stMultiSelect > div > div,
+[data-testid="stSidebar"] .stMultiSelect > div > div > div,
+[data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] > div,
+[data-testid="stSidebar"] .stMultiSelect [role="button"] {
+    transition: background-color 0.3s ease, box-shadow 0.2s ease;
+}
+
+[data-testid="stSidebar"] .stMultiSelect > div > div:hover,
+[data-testid="stSidebar"] .stMultiSelect > div > div > div:hover,
+[data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] > div:hover,
+[data-testid="stSidebar"] .stMultiSelect [role="button"]:hover {
+    background-color: rgba(0, 168, 89, 0.7) !important;
+    box-shadow: 0 2px 8px rgba(0, 168, 89, 0.4);
+}
+
+/* Radio buttons in sidebar */
+/*
+[data-testid="stSidebar"] .stRadio > div > label:hover {
+    background-color: rgba(0, 168, 89, 0.7) !important;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+/* Buttons using secondary color */
+.stButton > button:hover {
+    background-color: rgba(0, 176, 202, 0.9) !important;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 176, 202, 0.3);
+    transition: all 0.3s ease;
+}
+
+/* Download buttons */
+.stDownloadButton > button:hover {
+    background-color: rgba(0, 176, 202, 0.9) !important;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 176, 202, 0.3);
+    transition: all 0.3s ease;
+}
+
+/* Checkboxes in main content */
+.stCheckbox > div > label:hover {
+    background-color: rgba(0, 176, 202, 0.1) !important;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+/* Checkboxes in sidebar */
+/*
+[data-testid="stSidebar"] .stCheckbox > div > label:hover {
+    background-color: rgba(0, 168, 89, 0.7) !important;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+/* Text inputs */
+[data-testid="stTextInput"] > div > div {
+    background-color: var(--branco) !important;
+}
+
+.stTextInput > div > div > input:hover {
+    border-color: var(--azul-vale) !important;
+    box-shadow: 0 0 0 1px rgba(0, 176, 202, 0.3);
+    transition: all 0.3s ease;
+}
+
+/*
+[data-testid="stSidebar"] .stTextInput > div > div > input:hover {
+    border-color: rgba(0, 168, 89, 0.7) !important;
+    box-shadow: 0 0 0 1px rgba(0, 168, 89, 0.4);
+    transition: all 0.3s ease;
+}
+
+/* Number inputs */
+.stNumberInput > div > div > input:hover {
+    border-color: var(--azul-vale) !important;
+    box-shadow: 0 0 0 1px rgba(0, 176, 202, 0.3);
+    transition: all 0.3s ease;
+}
+
+/*
+[data-testid="stSidebar"] .stNumberInput > div > div > input:hover {
+    border-color: rgba(0, 168, 89, 0.7) !important;
+    box-shadow: 0 0 0 1px rgba(0, 168, 89, 0.4);
+    transition: all 0.3s ease;
+}
+
+/* Sliders */
+.stSlider > div > div > div > div:hover {
+    background-color: rgba(0, 176, 202, 0.1) !important;
+    transition: background-color 0.3s ease;
+}
+
+/*
+[data-testid="stSidebar"] .stSlider > div > div > div > div:hover {
+    background-color: rgba(0, 168, 89, 0.7) !important;
+    transition: background-color 0.3s ease;
+}
+
+/* Tabs hover effects */
+.stTabs [data-baseweb="tab"]:hover {
+    background-color: rgba(0, 176, 202, 0.1) !important;
+    transition: background-color 0.3s ease;
+}
+
+
+/* ================================================================
+   CUSTOM CARDS AND METRICS
+   Performance cards, metric containers, and custom card styling
+   ================================================================ */
+
+/* Metric styling */
+.metric-container {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 0.5rem 0;
+}
+
+/* Custom cards styling */
+.custom-card {
+    border-radius: 16px;
+    padding: 20px;
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 22px;
+    font-family: 'Segoe UI', sans-serif;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
+}
+
+.custom-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.card-positive {
+    background-color: var(--light-success);
+    color: var(--success-color);
+}
+
+.card-negative {
+    background-color: var(--light-danger);
+    color: var(--danger-color);
+}
+
+.card-neutral {
+    background-color: var(--light-info);
+    color: var(--primary-text);
+}
+
+/* Performance cards for reports */
+.performance-card {
+    background-color: #747678;
+    color: white;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px; 
+    border-radius: 15px; 
+    border: 2px solid var(--light-gray);
+    margin: 10px 0;
+    font-size: 20px;
+    font-family: "Segoe UI", sans-serif;
+    font-weight: 500;
+    color: var(--branco);
+    text-align: center;
+    line-height: 1.4;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.performance-card:hover {
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+}
+
+.performance-card h2 {
+    background-color: white;      /* fundo branco */
+    color: #007070;               /* mantém contraste agradável */
+    display: inline-flex;        /* adapta o fundo apenas ao conteúdo do título */
+    padding: 2px 8px;            /* espaçamento interno */
+    border-radius: 10px;          /* bordas arredondadas */
+    margin-bottom: 10px;
+    font-size: 24px;
+    font-weight: 700;
+    align-items: center;
+    text-shadow: none;            /* remove sombra para texto mais limpo */
+}
+
+.performance-card h2 a {
+    display: none !important;
+}
+
+.performance-card h3 {
+    color: var(--branco) !important;
+    margin-bottom: 10px;
+    font-size: 22px;
+    font-weight: 600;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+
+.performance-card .description {
+    font-size: 16px;
+    margin-top: 10px;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.performance-card .percentage {
+    font-size: 48px;
+    font-weight: 900;
+    margin: 15px 0;
+    text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+}
+
+.performance-card .indicator {
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.8;
+    margin-top: 5px;
+}
+
+.performance-card .content {
+    text-align: center;
+    width: 100%;
+}
+
+/* Performance card color variants */
+.card-excelente { 
+    background: linear-gradient(135deg, var(--success-color) 0%, var(--success-light) 100%); 
+    border-color: var(--success-color); 
+}
+
+.card-bom { 
+    background: linear-gradient(135deg, var(--success-light) 0%, var(--success-lighter) 100%); 
+    border-color: var(--success-light); 
+}
+
+.card-regular { 
+    background: linear-gradient(135deg, var(--warning-color) 0%, var(--warning-light) 100%); 
+    border-color: var(--warning-color); 
+}
+
+.card-ruim { 
+    background: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-light) 100%); 
+    border-color: var(--danger-color); 
+}
+
+.card-muito-ruim { 
+    background: linear-gradient(135deg, var(--danger-dark) 0%, var(--danger-dark-light) 100%); 
+    border-color: var(--danger-dark); 
+}
+
+/* Individual card colors for reports */
+.card-blue {
+    background-color: var(--violeta-vale);
+}
+
+.card-blue:hover {
+    background-color: var(--violeta-vale);
+}
+
+.card-orange {
+    background-color: var(--laranja-vale);
+}
+
+.card-orange:hover {
+    background-color: var(--laranja-vale);
+}
+
+.card-green {
+    background-color: var(--verde-claro-vale);
+}
+
+.card-green:hover {
+    background-color: var(--verde-claro-vale);
+}
+
+
+
+
+/* ================================================================
+   AGGRID TABLE STYLING
+   Data grid appearance, colors, and theme customization
+   ================================================================ */
+
+/* AgGrid styling */
+.ag-theme-quartz {
+    --ag-background-color: var(--ag-background);
+    --ag-border-color: var(--ag-border);
+    --ag-header-background-color: var(--ag-header-bg);
+    --ag-header-font-weight: 700;
+    --ag-header-foreground-color: var(--ag-header-fg);
+    --ag-odd-row-background-color: var(--ag-odd-row);
+}
+
+/* Direct AgGrid header styling */
+.ag-header-cell-label,
+.ag-header-cell-text {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+}
+
+/* Direct AgGrid cell content styling */
+.ag-cell,
+.ag-cell-value {
+    font-size: 12px !important;
+}
+
+
+
+
+/* ================================================================
+   NAVIGATION AND LAYOUT
+   Custom navigation links and layout adjustments
+   ================================================================ */
+
+/* Hide default Streamlit navigation */
+.css-1y4p8pa {
+    display: none !important;
+}
+
+/* Custom navigation links */
+.nav-link {
+    display: block;
+    padding: 12px 16px;
+    margin: 4px 0;
+    border-radius: 8px;
+    text-decoration: none !important;
+    color: var(--primary-text) !important;
+    background: var(--background-light);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.nav-link:hover {
+    background: var(--border-light);
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-link.active {
+    background: var(--primary-blue);
+    color: white !important;
+    border-color: var(--primary-blue);
+}
+
+/*
+Remove header in the streamlit body
+*/
+[data-testid="stHeader"] {
+    visibility: hidden;
+}
+
+/* ================================================================
+   SIDEBAR ALWAYS EXPANDED
+   Force sidebar to stay open and hide collapse button
+   ================================================================ */
+
+/* Hide the sidebar collapse button */
+[data-testid="collapsedControl"] {
+    display: none !important;
+}
+
+/* Force sidebar to stay expanded */
+[data-testid="stSidebar"] {
+    min-width: 15rem !important;
+    max-width: 15rem !important;
+}
+
+/* Ensure sidebar content is always visible */
+[data-testid="stSidebar"][aria-expanded="false"] {
+    margin-left: 0px !important;
+}
+
+/* Override any collapse animations */
+section[data-testid="stSidebar"] {
+    transform: none !important;
+}
+
+
+
+
+
+
+
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    white-space: nowrap; /* evita quebrar em várias linhas */
+}
+
+.info-icon {
+    display: inline-block;
+    background-color: white;
+    color: #747678;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    position: relative;
+    cursor: pointer;
+}
+
+.tooltip {
+    visibility: hidden;
+    background-color: white;
+    color: #333;
+    text-align: left;
+    border-radius: 8px;
+    padding: 10px;
+    position: absolute;
+    z-index: 1;
+    top: 25px;
+    left: 0;
+    width: 250px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+.info-icon:hover .tooltip {
+    visibility: visible;
+}

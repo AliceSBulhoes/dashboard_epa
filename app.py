@@ -35,15 +35,25 @@ def config_page():
 
 def css():
     """Função que aplica estilos CSS personalizados."""
-    st.markdown("""
-        <style>
-        @import url('https://fonts.googleapis.com/css2?family=Mulish:wght@200;400;700&display=swap');
-
-        html, body, [class*="css"]  {
-            font-family: 'Mulish', sans-serif !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    # Load external CSS file
+    css_file_path = "styles.css"
+    try:
+        with open(css_file_path, "r", encoding="utf-8") as f:
+            external_css = f.read()
+        st.markdown(f"<style>{external_css}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.warning(f"CSS file not found: {css_file_path}")
+    
+#    # Apply inline CSS
+#    st.markdown("""
+#        <style>
+#        @import url('https://fonts.googleapis.com/css2?family=Mulish:wght@200;400;700&display=swap');
+#
+#        html, body, [class*="css"]  {
+#            font-family: 'Mulish', sans-serif !important;
+#        }
+#        </style>
+#    """, unsafe_allow_html=True)
 
 
 def main():
