@@ -141,13 +141,9 @@ if upload_file is not None and len(upload_file) > 0:
         if "filtro_categorias" not in st.session_state:
             st.session_state["filtro_categorias"] = [categorias[0]]
         
-        default_categorias = [cat for cat in st.session_state["filtro_categorias"] if cat in categorias] if "filtro_categorias" in st.session_state else [categorias[0]]
-        if not default_categorias:
-            default_categorias = [categorias[0]]
         categoria_selecionada = st.sidebar.multiselect(
             "Selecione a Categoria",
             options=categorias,
-            default=default_categorias,
             key="filtro_categorias"
         )
         if not categoria_selecionada:
@@ -205,7 +201,7 @@ if upload_file is not None and len(upload_file) > 0:
             # ---------------------- Gráficos -----------------------
             # Initialize session state for infiltrado columns
             if "filtro_colunas_infiltrado" not in st.session_state:
-                st.session_state["filtro_colunas_infiltrado"] = []
+                st.session_state["filtro_colunas_infiltrado"] = ['Volume Pontos vs Acumulado (Linhas)']
             if "filtro_pontos_infiltrado" not in st.session_state:
                 st.session_state["filtro_pontos_infiltrado"] = []
         
@@ -216,7 +212,6 @@ if upload_file is not None and len(upload_file) > 0:
             colunas_escolher = col1.multiselect(
                 "Selecione o tipo de gráfico",
                 options=['Volume por Ponto com Estatísticas', 'Volume Pontos vs Acumulado (Linhas)', 'Volume Pontos vs Acumulado (Barras)', 'Volume Ponto Temporal', 'Boxplot Volume por Data'],
-                default=st.session_state["filtro_colunas_infiltrado"] if st.session_state["filtro_colunas_infiltrado"] else ['Volume Pontos vs Acumulado (Linhas)'],
                 key="filtro_colunas_infiltrado"
             )
         
